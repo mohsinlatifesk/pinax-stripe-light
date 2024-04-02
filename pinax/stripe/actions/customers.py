@@ -221,12 +221,15 @@ def sync_customer(customer, cu=None):
         purge_local(customer)
         return
 
-    customer.account_balance = utils.convert_amount_for_db(cu["account_balance"], cu["currency"])
+    local_customer_balance = cu.get("account_balance", 1)
+    customer.account_balance = utils.convert_amount_for_db(local_customer_balance, cu["currency"])
     customer.currency = cu["currency"] or ""
     customer.delinquent = cu["delinquent"]
     customer.default_source = cu["default_source"] or ""
     customer.save()
-    for source in cu["sources"]["data"]:
-        sources.sync_payment_source_from_stripe_data(customer, source)
-    for subscription in cu["subscriptions"]["data"]:
-        subscriptions.sync_subscription_from_stripe_data(customer, subscription)
+    if cu.get("sources"):
+        for source in cu["sources"]["data"]:
+            sources.sync_payment_source_from_stripe_data(customer, source)
+    if cu.get("subscriptions"):
+        for subscription in cu["subscriptions"]["data"]:
+            subscriptions.sync_subscription_from_stripe_data(customer, subscription)
