@@ -77,7 +77,7 @@ def sync_invoice_from_stripe_data(stripe_invoice, send_receipt=settings.PINAX_ST
     c = models.Customer.objects.get(stripe_id=stripe_invoice["customer"])
     period_end = utils.convert_tstamp(stripe_invoice, "period_end")
     period_start = utils.convert_tstamp(stripe_invoice, "period_start")
-    date = period_end
+    date = utils.convert_tstamp(stripe_invoice, "date") if stripe_invoice.get("date") else period_end
     sub_id = stripe_invoice.get("subscription")
     stripe_account_id = c.stripe_account_stripe_id
 
@@ -96,13 +96,13 @@ def sync_invoice_from_stripe_data(stripe_invoice, send_receipt=settings.PINAX_ST
         attempted=stripe_invoice["attempted"],
         attempt_count=stripe_invoice["attempt_count"],
         amount_due=utils.convert_amount_for_db(stripe_invoice["amount_due"], stripe_invoice["currency"]),
-        closed=False,
+        closed=stripe_invoice["closed"] if stripe_invoice.get("closed") else False,
         paid=stripe_invoice["paid"],
         period_end=period_end,
         period_start=period_start,
         subtotal=utils.convert_amount_for_db(stripe_invoice["subtotal"], stripe_invoice["currency"]),
         tax=utils.convert_amount_for_db(stripe_invoice["tax"], stripe_invoice["currency"]) if stripe_invoice["tax"] is not None else None,
-        tax_percent=0.0,
+        tax_percent=decimal.Decimal(stripe_invoice["tax_percent"]) if stripe_invoice.get("tax_percent") else 0.0,
         total=utils.convert_amount_for_db(stripe_invoice["total"], stripe_invoice["currency"]),
         currency=stripe_invoice["currency"],
         date=date,
