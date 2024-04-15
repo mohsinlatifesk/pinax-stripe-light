@@ -165,7 +165,7 @@ def sync_invoice_items(invoice, items):
             else:
                 stripe_subscription = subscriptions.retrieve(
                     invoice.customer,
-                    item["id"]
+                    item["subscription"]
                 )
                 item_subscription = subscriptions.sync_subscription_from_stripe_data(
                     invoice.customer,
